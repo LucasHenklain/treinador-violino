@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Treinador de Posição — 1ª Posição</title>
+<style>
+  :root{
+    --bg: #14110E;
+    --bg-card: #1D1813;
+    --bg-card-2: #221C16;
+    --rule: #3A3026;
+    --ink: #ECE4D6;
+    --ink-dim: #A89C8B;
+    --g: #E8A33D;
+    --d: #E0594F;
+    --a: #3FB8AF;
+    --e: #9B8CE0;
+    --ok: #6FCF8E;
+    --ok-ink: #0C1B12;
+    --bad: #E5697A;
+    --bad-ink: #2A0B0F;
+    --display: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    --body: -apple-system, "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; animation: none !important; }
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--body);
+    -webkit-font-smoothing: antialiased;
+  }
+  .app{
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 28px 18px 60px;
+  }
+  .eyebrow{
+    font-size: .72rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin: 0 0 6px;
+  }
+  h1{
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 1.65rem;
+    margin: 0 0 18px;
+    line-height: 1.25;
+  }
+  .stats-bar{
+    display:flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .stat{
+    flex:1;
+    background: var(--bg-card);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align:center;
+  }
+  .stat .num{
+    font-family: var(--display);
+    font-size: 1.3rem;
+    display:block;
+  }
+  .stat .lbl{
+    font-size: .65rem;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .card{
+    background: var(--bg-card);
+    border: 1px solid var(--rule);
+    border-radius: 16px;
+    padding: 20px 16px;
+    margin-bottom: 16px;
+  }
+  .card-label{
+    font-size: .72rem;
+    color: var(--ink-dim);
+    margin: 0 0 10px;
+  }
+  .staff-wrap{
+    display:flex;
+    justify-content:center;
+    margin-bottom: 8px;
+  }
+  .note-name{
+    text-align:center;
+    font-family: var(--display);
+    font-size: 1.5rem;
+    min-height: 1.9rem;
+    color: var(--ink);
+  }
+  .note-name.hidden{ visibility:hidden; }
+  .toggle-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: .8rem;
+    color: var(--ink-dim);
+  }
+  .toggle-row input{ accent-color: var(--a); width:16px; height:16px; }
+  .instruction{
+    text-align:center;
+    color: var(--ink-dim);
+    font-size: .85rem;
+    margin: 0 0 14px;
+  }
+  .legend{
+    display:flex;
+    justify-content:center;
+    gap: 14px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .legend span{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    font-size:.72rem;
+    color: var(--ink-dim);
+  }
+  .dot{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+  .string-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    padding: 10px 0;
+  }
+  .string-row + .string-row{ border-top: 1px solid var(--rule); }
+  .string-label{
+    width: 40px;
+    text-align:right;
+    font-family: var(--display);
+    font-size: .85rem;
+    flex-shrink:0;
+  }
+  .string-track{
+    position:relative;
+    flex:1;
+    height: 42px;
+    display:flex;
+    align-items:center;
+  }
+  .string-line{
+    position:absolute;
+    left:0; right:0; top:50%;
+    transform: translateY(-50%);
+    border-radius: 2px;
+    opacity:.45;
+  }
+  .finger-zones{
+    position:relative;
+    display:flex;
+    justify-content: space-between;
+    width:100%;
+    z-index:1;
+  }
+  .finger-zone{
+    width: 36px; height:36px;
+    border-radius:50%;
+    background: var(--bg-card-2);
+    color: var(--ink);
+    font-family: var(--body);
+    font-weight:600;
+    font-size: .9rem;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    border: 2px solid var(--rule);
+    transition: background .15s, border-color .15s, color .15s, transform .1s;
+  }
+  .finger-zone:hover{ transform: translateY(-1px); }
+  .finger-zone:focus-visible{ outline: 2px solid var(--ink); outline-offset:2px; }
+  .finger-zone.correct{ background: var(--ok); border-color: var(--ok); color: var(--ok-ink); }
+  .finger-zone.wrong{ background: var(--bad); border-color: var(--bad); color:#fff; }
+  .feedback{
+    min-height: 50px;
+    text-align:center;
+    font-size: .92rem;
+    padding-top: 14px;
+    color: var(--ink-dim);
+  }
+  .feedback.ok{ color: var(--ok); }
+  .feedback.bad{ color: var(--bad); }
+  .next-btn{
+    display:block;
+    margin: 10px auto 0;
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ink);
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-family: var(--body);
+    font-size: .82rem;
+    cursor:pointer;
+    visibility:hidden;
+  }
+  .next-btn.show{ visibility: visible; }
+  .next-btn:hover{ border-color: var(--ink-dim); }
+  .weak-list{
+    font-size: .85rem;
+    color: var(--ink-dim);
+    line-height: 1.6;
+  }
+  .weak-list b{ color: var(--ink); font-weight:500; }
+  .footer-note{
+    font-size: .75rem;
+    color: var(--ink-dim);
+    text-align:center;
+    margin-top: 6px;
+    line-height:1.5;
+  }
+  .reset-row{
+    text-align:center;
+    margin-top: 18px;
+  }
+  .reset-btn{
+    background:none;
+    border:none;
+    color: var(--ink-dim);
+    font-size: .75rem;
+    text-decoration: underline;
+    cursor:pointer;
+  }
+  .confirm-row{
+    display:none;
+    justify-content:center;
+    gap:10px;
+    margin-top:8px;
+  }
+  .confirm-row.show{ display:flex; }
+  .confirm-row button{
+    font-size:.75rem;
+    padding:5px 12px;
+    border-radius:6px;
+    border:1px solid var(--rule);
+    background: var(--bg-card-2);
+    color: var(--ink);
+    cursor:pointer;
+  }
+  .confirm-row .danger{ border-color: var(--bad); color: var(--bad); }
+</style>
+</head>
+<body>
+<div class="app">
+  <p class="eyebrow">Treino de posição · 1ª posição</p>
+  <h1>Você sabe a nota. Agora ache ela no braço.</h1>
+
+  <div class="stats-bar">
+    <div class="stat"><span class="num" id="statStreak">0</span><span class="lbl">dias seguidos</span></div>
+    <div class="stat"><span class="num" id="statAccuracy">—</span><span class="lbl">acerto geral</span></div>
+    <div class="stat"><span class="num" id="statToday">0</span><span class="lbl">hoje</span></div>
+  </div>
+
+  <div class="card">
+    <p class="card-label">Leia</p>
+    <div class="staff-wrap" id="staffWrap"></div>
+    <div class="note-name" id="noteName"></div>
+    <label class="toggle-row">
+      <input type="checkbox" id="toggleName" checked>
+      Mostrar nome da nota
+    </label>
+  </div>
+
+  <div class="card">
+    <p class="card-label">Toque a corda e o dedo certos</p>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--g)"></i>Sol</span>
+      <span><i class="dot" style="background:var(--d)"></i>Ré</span>
+      <span><i class="dot" style="background:var(--a)"></i>Lá</span>
+      <span><i class="dot" style="background:var(--e)"></i>Mi</span>
+    </div>
+    <div id="fingerboard"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next-btn" id="nextBtn">Próxima nota →</button>
+  </div>
+
+  <div class="card">
+    <p class="card-label">Notas mais difíceis</p>
+    <div class="weak-list" id="weakList">Responda pelo menos 3 vezes cada nota para aparecer aqui.</div>
+  </div>
+
+  <p class="footer-note">Este treino cobre a 1ª posição inteira. Quando o MSA introduzir 2ª e 3ª posição, dá pra expandir o mapa de notas.</p>
+
+  <div class="reset-row">
+    <button class="reset-btn" id="resetBtn">Zerar progresso salvo</button>
+    <div class="confirm-row" id="confirmRow">
+      <span style="font-size:.75rem;color:var(--ink-dim)">Apaga tudo, sem volta.</span>
+      <button class="danger" id="confirmYes">Apagar</button>
+      <button id="confirmNo">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const LETTER_STEP = {C:0,D:1,E:2,F:3,G:4,A:5,B:6};
+const SOLFEGE = {C:'Do',D:'Ré',E:'Mi',F:'Fá',G:'Sol',A:'Lá',B:'Si'};
+const STRING_NAME = {G:'Sol',D:'Ré',A:'Lá',E:'Mi'};
+const STRING_VAR = {G:'var(--g)',D:'var(--d)',A:'var(--a)',E:'var(--e)'};
+const STRING_THICKNESS = {G:5,D:3.5,A:2.5,E:1.5};
+const STRING_ORDER = ['G','D','A','E'];
+
+const NOTES = [
+  {letter:'G', acc:'', oct:3, positions:[{s:'G',f:0}]},
+  {letter:'A', acc:'', oct:3, positions:[{s:'G',f:1}]},
+  {letter:'B', acc:'', oct:3, positions:[{s:'G',f:2}]},
+  {letter:'C', acc:'', oct:4, positions:[{s:'G',f:3}]},
+  {letter:'D', acc:'', oct:4, positions:[{s:'G',f:4},{s:'D',f:0}]},
+  {letter:'E', acc:'', oct:4, positions:[{s:'D',f:1}]},
+  {letter:'F', acc:'#', oct:4, positions:[{s:'D',f:2}]},
+  {letter:'G', acc:'', oct:4, positions:[{s:'D',f:3}]},
+  {letter:'A', acc:'', oct:4, positions:[{s:'D',f:4},{s:'A',f:0}]},
+  {letter:'B', acc:'', oct:4, positions:[{s:'A',f:1}]},
+  {letter:'C', acc:'#', oct:5, positions:[{s:'A',f:2}]},
+  {letter:'D', acc:'', oct:5, positions:[{s:'A',f:3}]},
+  {letter:'E', acc:'', oct:5, positions:[{s:'A',f:4},{s:'E',f:0}]},
+  {letter:'F', acc:'#', oct:5, positions:[{s:'E',f:1}]},
+  {letter:'G', acc:'#', oct:5, positions:[{s:'E',f:2}]},
+  {letter:'A', acc:'', oct:5, positions:[{s:'E',f:3}]},
+  {letter:'B', acc:'', oct:5, positions:[{s:'E',f:4}]},
+];
+NOTES.forEach(n => { n.key = n.letter + n.acc + n.oct; n.solfege = SOLFEGE[n.letter] + (n.acc ? '♯' : ''); });
+
+const STORAGE_KEY = 'violin-position-trainer:v1';
+let state = null;
+let current = null;
+let locked = false;
+let lastKey = null;
+let nextTimer = null;
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function yesterdayStr(){
+  const d = new Date();
+  d.setDate(d.getDate()-1);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function defaultState(){
+  return {
+    perNote: {},
+    totalAttempts: 0,
+    totalCorrect: 0,
+    dayStreak: 0,
+    lastPracticeDate: null,
+    todayDate: todayStr(),
+    todayCount: 0,
+    showNoteName: true
+  };
+}
+
+async function loadState(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    if(res && res.value){
+      const parsed = JSON.parse(res.value);
+      state = Object.assign(defaultState(), parsed);
+    } else {
+      state = defaultState();
+    }
+  } catch(e){
+    state = defaultState();
+  }
+  if(state.todayDate !== todayStr()){
+    state.todayDate = todayStr();
+    state.todayCount = 0;
+  }
+}
+
+async function saveState(){
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify(state), false);
+  } catch(e){
+    // non-fatal: progress just won't persist this time
+  }
+}
+
+function registerPractice(){
+  const today = todayStr();
+  if(state.lastPracticeDate === today) return;
+  if(state.lastPracticeDate === yesterdayStr()){
+    state.dayStreak += 1;
+  } else {
+    state.dayStreak = 1;
+  }
+  state.lastPracticeDate = today;
+}
+
+function ledgerLines(diff){
+  const lines = [];
+  if(diff < 0){
+    for(let p=-2; p>=diff; p-=2) lines.push(p);
+  } else if(diff > 8){
+    for(let p=10; p<=diff; p+=2) lines.push(p);
+  }
+  return lines;
+}
+
+function renderStaff(note){
+  const step = note.oct*7 + LETTER_STEP[note.letter];
+  const diff = step - 30; // 0 = bottom line (E4)
+  const baseY = 110;
+  const cy = baseY - diff*10;
+  const cx = 195;
+  const lines = [110,90,70,50,30];
+  let svg = `<svg viewBox="0 0 260 170" width="260" height="170">`;
+  lines.forEach(y => {
+    svg += `<line x1="10" y1="${y}" x2="240" y2="${y}" stroke="var(--rule)" stroke-width="1.4"/>`;
+  });
+  svg += `<text x="22" y="118" font-size="86" fill="var(--ink-dim)" font-family="serif">&#119070;</text>`;
+  ledgerLines(diff).forEach(p => {
+    const ly = baseY - p*10;
+    svg += `<line x1="${cx-17}" y1="${ly}" x2="${cx+17}" y2="${ly}" stroke="var(--ink-dim)" stroke-width="1.4"/>`;
+  });
+  if(note.acc === '#'){
+    svg += `<text x="${cx-30}" y="${cy+6}" font-size="20" fill="var(--ink)">&#9839;</text>`;
+  }
+  svg += `<ellipse cx="${cx}" cy="${cy}" rx="8.5" ry="6.2" transform="rotate(-16 ${cx} ${cy})" fill="var(--ink)"/>`;
+  svg += `</svg>`;
+  return svg;
+}
+
+function buildFingerboard(){
+  const board = document.getElementById('fingerboard');
+  board.innerHTML = '';
+  STRING_ORDER.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'string-row';
+    row.innerHTML = `
+      <div class="string-label" style="color:${STRING_VAR[s]}">${STRING_NAME[s]}</div>
+      <div class="string-track">
+        <div class="string-line" style="background:${STRING_VAR[s]};height:${STRING_THICKNESS[s]}px"></div>
+        <div class="finger-zones" data-string="${s}">
+          ${[0,1,2,3,4].map(f => `<button class="finger-zone" data-string="${s}" data-finger="${f}" style="border-color:${STRING_VAR[s]}">${f}</button>`).join('')}
+        </div>
+      </div>
+    `;
+    board.appendChild(row);
+  });
+  board.querySelectorAll('.finger-zone').forEach(btn => {
+    btn.addEventListener('click', () => onAnswer(btn.dataset.string, parseInt(btn.dataset.finger,10), btn));
+  });
+}
+
+function weightFor(note){
+  const stat = state.perNote[note.key];
+  if(!stat || stat.attempts === 0) return 2.2;
+  const missRate = 1 - (stat.correct / stat.attempts);
+  return 1 + missRate*3;
+}
+
+function pickNote(){
+  let pool = NOTES;
+  if(lastKey && NOTES.length > 1) pool = NOTES.filter(n => n.key !== lastKey);
+  const weights = pool.map(weightFor);
+  const total = weights.reduce((a,b)=>a+b,0);
+  let r = Math.random()*total;
+  for(let i=0;i<pool.length;i++){
+    r -= weights[i];
+    if(r <= 0) return pool[i];
+  }
+  return pool[pool.length-1];
+}
+
+function renderNoteName(){
+  const el = document.getElementById('noteName');
+  el.textContent = current.solfege;
+  el.classList.toggle('hidden', !state.showNoteName);
+}
+
+function showNote(){
+  current = pickNote();
+  lastKey = current.key;
+  document.getElementById('staffWrap').innerHTML = renderStaff(current);
+  renderNoteName();
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('nextBtn').classList.remove('show');
+  document.querySelectorAll('.finger-zone').forEach(b => b.classList.remove('correct','wrong'));
+  locked = false;
+}
+
+function positionLabel(pos){
+  return `corda ${STRING_NAME[pos.s]}${pos.f === 0 ? ' aberta' : ', ' + pos.f + 'º dedo'}`;
+}
+
+async function onAnswer(s, f, btnEl){
+  if(locked) return;
+  locked = true;
+  clearTimeout(nextTimer);
+
+  registerPractice();
+
+  const isCorrect = current.positions.some(p => p.s === s && p.f === f);
+  if(!state.perNote[current.key]) state.perNote[current.key] = {attempts:0, correct:0};
+  state.perNote[current.key].attempts += 1;
+  if(isCorrect) state.perNote[current.key].correct += 1;
+  state.totalAttempts += 1;
+  if(isCorrect) state.totalCorrect += 1;
+  if(state.todayDate !== todayStr()){ state.todayDate = todayStr(); state.todayCount = 0; }
+  state.todayCount += 1;
+
+  document.querySelectorAll('.finger-zone').forEach(b => {
+    const bs = b.dataset.string, bf = parseInt(b.dataset.finger,10);
+    if(current.positions.some(p => p.s === bs && p.f === bf)) b.classList.add('correct');
+  });
+  if(!isCorrect) btnEl.classList.add('wrong');
+
+  const fb = document.getElementById('feedback');
+  const altPositions = current.positions.filter(p => !(p.s===s && p.f===f));
+  if(isCorrect){
+    fb.className = 'feedback ok';
+    fb.textContent = altPositions.length
+      ? `Certo — ${current.solfege}, ${positionLabel({s,f})}. Também dá pra tocar na ${positionLabel(altPositions[0])}.`
+      : `Certo — ${current.solfege}, ${positionLabel({s,f})}.`;
+  } else {
+    fb.className = 'feedback bad';
+    const correctText = current.positions.map(positionLabel).join(' ou ');
+    fb.textContent = `Não — ${current.solfege} fica na ${correctText}.`;
+  }
+
+  renderWeakList();
+  renderStats();
+  document.getElementById('nextBtn').classList.add('show');
+  await saveState();
+
+  nextTimer = setTimeout(showNote, 2400);
+}
+
+function renderStats(){
+  document.getElementById('statStreak').textContent = state.dayStreak;
+  document.getElementById('statAccuracy').textContent = state.totalAttempts
+    ? Math.round(100*state.totalCorrect/state.totalAttempts) + '%'
+    : '—';
+  document.getElementById('statToday').textContent = state.todayCount;
+}
+
+function renderWeakList(){
+  const el = document.getElementById('weakList');
+  const rows = NOTES
+    .map(n => ({n, stat: state.perNote[n.key]}))
+    .filter(r => r.stat && r.stat.attempts >= 3)
+    .map(r => ({...r, missRate: 1 - r.stat.correct/r.stat.attempts}))
+    .sort((a,b) => b.missRate - a.missRate)
+    .slice(0,3);
+  if(!rows.length){
+    el.textContent = 'Responda pelo menos 3 vezes cada nota para aparecer aqui.';
+    return;
+  }
+  el.innerHTML = rows.map(r => {
+    const acc = Math.round(100*r.stat.correct/r.stat.attempts);
+    const pos = r.n.positions.map(positionLabel).join(' ou ');
+    return `<div><b>${r.n.solfege}</b> (${pos}) — ${acc}% de acerto</div>`;
+  }).join('');
+}
+
+document.getElementById('toggleName').addEventListener('change', (e) => {
+  state.showNoteName = e.target.checked;
+  renderNoteName();
+  saveState();
+});
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  clearTimeout(nextTimer);
+  showNote();
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  document.getElementById('confirmRow').classList.add('show');
+});
+document.getElementById('confirmNo').addEventListener('click', () => {
+  document.getElementById('confirmRow').classList.remove('show');
+});
+document.getElementById('confirmYes').addEventListener('click', async () => {
+  state = defaultState();
+  await saveState();
+  document.getElementById('confirmRow').classList.remove('show');
+  renderStats();
+  renderWeakList();
+  showNote();
+});
+
+async function init(){
+  await loadState();
+  document.getElementById('toggleName').checked = state.showNoteName;
+  buildFingerboard();
+  renderStats();
+  renderWeakList();
+  showNote();
+}
+init();
+</script>
+</body>
+</html>
